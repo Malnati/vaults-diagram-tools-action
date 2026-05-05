@@ -1,0 +1,70 @@
+name: Vaults Diagram Tools
+description: Render Mermaid assets, generate source diagrams, and validate Markdown diagram policy
+author: Malnati
+branding:
+  icon: git-branch
+  color: purple
+
+inputs:
+  mode:
+    description: "Action mode: render, source, or policy."
+    required: false
+    default: render
+  input:
+    description: "Input file or directory for render mode, or Markdown file/directory for policy mode."
+    required: false
+  source-dir:
+    description: "Source directory for source mode."
+    required: false
+  output-dir:
+    description: "Directory for generated assets and manifests."
+    required: false
+    default: vaults-diagram-tools-output
+  manifest:
+    description: "Manifest path. Defaults to render-manifest.json for render mode and manifest.json for source mode inside output-dir."
+    required: false
+  package-version:
+    description: "vaults-diagram-tools npm version. Use auto to match this action release default."
+    required: false
+    default: auto
+  node-version:
+    description: "Node.js version installed through actions/setup-node."
+    required: false
+    default: "20"
+  args:
+    description: "Extra CLI arguments, one argument per line. No shell eval is used."
+    required: false
+    default: ""
+
+outputs:
+  output-dir:
+    description: "Absolute path to the output directory used by render/source modes."
+    value: ${{ steps.run.outputs.output-dir }}
+  manifest:
+    description: "Absolute path to the manifest used by render/source modes. Empty for policy mode unless manifest was set."
+    value: ${{ steps.run.outputs.manifest }}
+  command:
+    description: "Command executed by the action."
+    value: ${{ steps.run.outputs.command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+    - name: Run vaults-diagram-tools
+      id: run
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        ACTION_REF: ${{ github.action_ref }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_INPUT: ${{ inputs.input }}
+        INPUT_SOURCE_DIR: ${{ inputs.source-dir }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        INPUT_MANIFEST: ${{ inputs.manifest }}
+        INPUT_PACKAGE_VERSION: ${{ inputs.package-version }}
+        INPUT_ARGS: ${{ inputs.args }}
+      run: node "$ACTION_PATH/src/run-action.mjs"
