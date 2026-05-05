@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const actionPath = process.env.ACTION_PATH || path.resolve(__dirname, "..");
 const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
+const executionCwd = process.env.RUNNER_TEMP || os.tmpdir();
 
 function input(name, fallback = "") {
   const value = process.env[`INPUT_${name}`];
@@ -101,13 +103,14 @@ const command = [npmBin, ...npmArgs].map(shellQuote).join(" ");
 console.log(`vaults-diagram-tools action mode: ${mode}`);
 console.log(`vaults-diagram-tools package: ${packageVersion}`);
 console.log(`Command: ${command}`);
+console.log(`Execution cwd: ${executionCwd}`);
 
 setOutput("output-dir", mode === "policy" ? "" : outputDir);
 setOutput("manifest", manifest || "");
 setOutput("command", command);
 
 const result = spawnSync(npmBin, npmArgs, {
-  cwd: workspace,
+  cwd: executionCwd,
   env: process.env,
   stdio: "inherit",
 });
